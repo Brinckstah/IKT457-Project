@@ -136,7 +136,7 @@ void hg_print(struct hex_game *hg)
 			} else if (hg->board[((i+1)*(BOARD_DIM+2) + j + 1)*2 + 1] == 1) {
 				printf(" O");
 			} else {
-				printf(" ·");
+				printf(" .");
 			}
 		}
 		printf("\n");
@@ -147,8 +147,9 @@ int main() {
 	struct hex_game hg;
 
 	int winner = -1;
+	int count = 0;
 
-	for (int game = 0; game < 10000000; ++game) {
+	for (int game = 0; count < 1; ++game) {
 		hg_init(&hg);
 
 		int player = 0;
@@ -166,6 +167,7 @@ int main() {
 		if (hg.number_of_open_positions >= 75) {
 			printf("\nPlayer %d wins!\n\n", winner);
 			hg_print(&hg);
+			count++;
 		}
 	}
 }
