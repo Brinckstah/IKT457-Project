@@ -1,0 +1,75 @@
+
+Game 147603
+Player 0 wins!
+
+ . . . . . X O . O . O
+  . . O X . X X . . O X
+   O . . . . X . X O O .
+    . . . . X X O . . . .
+     . O . . . X X X . . .
+      . O . O . . . X X . O
+       . . O . . O . . X . .
+        O . . . X . O . X . .
+         . O . O . . X O X . .
+          X O . . . . . . X O .
+           . . . . . . X X . . .
+
+Game 151098
+Player 1 wins!
+
+ . X . . . . O X . . .
+  . . . . X . . X . . .
+   X . X . X . . O X . .
+    . . . O . . . . . . .
+     . X . . . . X . . . .
+      X X O . . . X O O O O
+       . . . . . . O X . X .
+        . X . . . O . X X . .
+         . X . X O . O . . O .
+          O . . O O . X . . O O
+           O O O O . . X O X . .
+
+Game 162954
+Player 0 wins!
+
+ . O . . . . O X . . O
+  . . . . O O X . . . O
+   . . X . X . X . . . .
+    . O X . X . X X O . .
+     . X . . . . . X . O O
+      . . X . O . X O O . .
+       . . . X . X X . O . .
+        . . . . O . X O . . .
+         X . . X O . X . . . .
+          O . . . X O X . . O .
+           O O . . . X . . . . .
+
+Game 471306
+Player 1 wins!
+
+ O O O . . . . . . . .
+  . . X . . . X . X X .
+   X . X . . O O O O O O
+    . . . O . O . . X . O
+     . O . . O . O . . . .
+      X . . O . . . . . X .
+       . . O X . . . O . O X
+        O O . X X O O X . . X
+         . . X . . . . . . . .
+          . . . . X . . X . . .
+           X X . . . X . X . . X
+
+Game 566943
+Player 0 wins!
+
+ O . O . . O . . . . X
+  . . . . O . . O . X X
+   . . O . . X . . . . X
+    O . O . . O X O . X .
+     X . X . . O . . X . .
+      . . . . . . . . X . .
+       O O . . . O . . X . .
+        . . . . X X . O X O X
+         . . . . O . O X X . .
+          . . . . . . . X . . .
+           . . . . . . . X . O .
