@@ -29,7 +29,7 @@ def default_args(**kwargs):
 args = default_args()
 
 # Load data
-data = pd.read_csv('3x3_small.csv')
+data = pd.read_csv('hex_game_results.csv')
 
 board_size = 3
 subset_size = int(data.shape[0] * 0.9)

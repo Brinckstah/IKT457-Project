@@ -11,6 +11,12 @@ def dataloader(path):
     data = pd.read_csv(path)
     X = data.iloc[:, 0].values
     y = data.iloc[:, 1].values
+    #Checking data split
+    x_win = (y==0).sum()
+    O_win = (y==1).sum()
+    print(f'0: {x_win}')
+    print(f'1: {O_win}')
+    
     X, X_test, y, y_test = train_test_split(X, y, test_size=0.1, random_state=7)
 
     print(f"X_train shape: {X.shape}")
@@ -63,30 +69,32 @@ def print_rules():
                     l.append("NOT x%d" % (k - args.hypervector_size))
         print(" AND ".join(l))
         print(f"Number of literals: {len(l)}")
-        
+                
+
 # Training loop
 def training():
     start_training = time.time()
     for i in range(args.epochs):
         tm.fit(graphs_train, y, epochs=1, incremental=True)
-        print(f"Epoch#{i+1} -- Accuracy train: {100*(tm.predict(graphs_test) == y_test).mean()}", end=' ')
-        print(f"-- Accuracy test: {100*(tm.predict(graphs_train) == y).mean()} ")
+        print(f"Epoch#{i+1} -- Accuracy train: {100*(tm.predict(graphs_train) == y).mean()}", end=' ')
+        print(f"-- Accuracy test: {100*(tm.predict(graphs_test) == y_test).mean()} ")
     stop_training = time.time()
     print(f"Time: {stop_training - start_training}")
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", default=500, type=int)
-    parser.add_argument("--number-of-clauses", default=150, type=int)
-    parser.add_argument("--T", default=10, type=int)
-    parser.add_argument("--s", default=1.2, type=float)
+    parser.add_argument("--epochs", default=100, type=int)
+    parser.add_argument("--number-of-clauses", default=300, type=int)
+    parser.add_argument("--T", default=600, type=int)
+    parser.add_argument("--s", default=1.5, type=float)
+    #parser.add_argument("--number-of-state-bits", default=8, type=int)
     parser.add_argument("--depth", default=3, type=int)
     parser.add_argument("--hypervector-size", default=512, type=int)
     parser.add_argument("--hypervector-bits", default=2, type=int)
     parser.add_argument("--message-size", default=512, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
     parser.add_argument('--double-hashing', dest='double_hashing', default=False, action='store_true')
-    parser.add_argument("--max-included-literals", default=16, type=int)
+    parser.add_argument("--max-included-literals", default=32, type=int)
 
     args = parser.parse_args()
     for key, value in kwargs.items():
@@ -97,16 +105,16 @@ def default_args(**kwargs):
 #load data
 args = default_args()
 
-board_size = 3
+board_size = 4
 
-X, X_test, y, y_test = dataloader('3x3_small.csv')
+X, X_test, y, y_test = dataloader('hex_game_results.csv')
 
 #create adjacency matrix
 adjacency_matrix = create_matrix(board_size)
 #print(adjacency_matrix)
 
 edges = [np.sum(adjacency_matrix[i]) for i in range(board_size ** 2)]
-print(f'Neighbors///edges: {edges}')
+#print(f'Neighbors///edges: {edges}')
 
 #graphs training data
 print("Creating training data")
