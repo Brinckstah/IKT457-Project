@@ -3,6 +3,9 @@ import pandas as pd
 import argparse
 import time
 from sklearn.model_selection import train_test_split
+import networkx as nx
+import matplotlib.pyplot as plt
+
 
 from GraphTsetlinMachine.graphs import Graphs
 from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
@@ -39,13 +42,16 @@ def create_matrix(board_size):
         return row * board_size + col
 
     #possible relative moves
-    moves = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+    moves_even = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]
+    moves_odd  = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1)]
 
     #loop through each node in the grid
     for row in range(board_size):
         for col in range(board_size):
             current_node = (row, col)
             current_node_index = pto(current_node, board_size)
+            
+            moves = moves_even if row % 2 == 0 else moves_odd
 
             for move in moves:
                 neighbor = (row + move[0], col + move[1])
@@ -53,6 +59,32 @@ def create_matrix(board_size):
                     neighbor_index = pto(neighbor, board_size)
                     adjacency_matrix[current_node_index, neighbor_index] = 1
                     adjacency_matrix[neighbor_index, current_node_index] = 1
+
+    return adjacency_matrix
+
+def generate_edge_count(size):
+    num_nodes = size * size
+    adjacency_matrix = np.zeros((num_nodes, num_nodes), dtype=int)
+
+    def node_index(row, col):
+        return (row - 1) * size + (col - 1)
+
+    for row in range(1, size + 1):
+        for col in range(1, size + 1):
+            current_index = node_index(row, col)
+            # Connecting nodes based on hexagonal connections
+            if row > 1:  # Connect to the node above
+                adjacency_matrix[current_index, node_index(row - 1, col)] = 1
+            if row < size:  # Connect to the node below
+                adjacency_matrix[current_index, node_index(row + 1, col)] = 1
+            if col > 1:  # Connect to the node to the left
+                adjacency_matrix[current_index, node_index(row, col - 1)] = 1
+            if col < size:  # Connect to the node to the right
+                adjacency_matrix[current_index, node_index(row, col + 1)] = 1
+            if row > 1 and col < size:  # Connect to the upper right node
+                adjacency_matrix[current_index, node_index(row - 1, col + 1)] = 1
+            if row < size and col > 1:  # Connect to the lower left node
+                adjacency_matrix[current_index, node_index(row + 1, col - 1)] = 1
 
     return adjacency_matrix
 
@@ -70,6 +102,43 @@ def print_rules():
         print(" AND ".join(l))
         print(f"Number of literals: {len(l)}")
                 
+def visualize(matrix):
+    G = nx.from_numpy_array(matrix)
+
+    # Draw the graph
+    plt.figure(figsize=(8, 8))
+    nx.draw(G, with_labels=True, node_color='lightblue', node_size=800, font_size=10, font_weight='bold')
+    plt.title("Graph Representation of the Adjacency Matrix")
+    plt.show()
+
+def visualize_hexagonal_grid(adjacency_matrix, board_size):
+    G = nx.Graph()  # Create an empty graph
+
+    # Add nodes
+    for node in range(board_size ** 2):
+        G.add_node(node)
+
+    # Add edges from the adjacency matrix
+    n_nodes = board_size ** 2
+    for i in range(n_nodes):
+        for j in range(n_nodes):
+            if adjacency_matrix[i, j] == 1:
+                G.add_edge(i, j)
+
+    # Create positions for hexagonal layout (manual positioning for hex grid)
+    pos = {}
+    for row in range(board_size):
+        for col in range(board_size):
+            index = row * board_size + col
+            x = col * 2 + (row % 2)  # Offset odd rows
+            y = -row * np.sqrt(3)  # Use a vertical spacing for rows
+            pos[index] = (x, y)
+
+    # Plot the hexagonal grid
+    plt.figure(figsize=(8, 8))
+    nx.draw(G, pos, with_labels=True, node_size=500, node_color="skyblue", font_size=12, font_weight="bold", edge_color="gray")
+    plt.title(f"Hexagonal Grid for Board Size {board_size}x{board_size}")
+    plt.show()
 
 # Training loop
 def training():
@@ -83,18 +152,18 @@ def training():
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", default=100, type=int)
-    parser.add_argument("--number-of-clauses", default=300, type=int)
-    parser.add_argument("--T", default=600, type=int)
-    parser.add_argument("--s", default=1.5, type=float)
+    parser.add_argument("--epochs", default=200, type=int)
+    parser.add_argument("--number-of-clauses", default=250, type=int)
+    parser.add_argument("--T", default=450, type=int)
+    parser.add_argument("--s", default=1.2, type=float)
     #parser.add_argument("--number-of-state-bits", default=8, type=int)
     parser.add_argument("--depth", default=3, type=int)
-    parser.add_argument("--hypervector-size", default=512, type=int)
+    parser.add_argument("--hypervector-size", default=256, type=int)
     parser.add_argument("--hypervector-bits", default=2, type=int)
-    parser.add_argument("--message-size", default=512, type=int)
+    parser.add_argument("--message-size", default=256, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
     parser.add_argument('--double-hashing', dest='double_hashing', default=False, action='store_true')
-    parser.add_argument("--max-included-literals", default=32, type=int)
+    parser.add_argument("--max-included-literals", default=16, type=int)
 
     args = parser.parse_args()
     for key, value in kwargs.items():
@@ -105,16 +174,20 @@ def default_args(**kwargs):
 #load data
 args = default_args()
 
-board_size = 4
+board_size = 3
 
-X, X_test, y, y_test = dataloader('hex_game_results.csv')
+#X, X_test, y, y_test = dataloader('hex_game_results.csv')
+X, X_test, y, y_test = dataloader('3x3_small.csv')
 
 #create adjacency matrix
-adjacency_matrix = create_matrix(board_size)
-#print(adjacency_matrix)
+#adjacency_matrix = create_matrix(board_size)
+adjacency_matrix = generate_edge_count(board_size)
+print(adjacency_matrix)
 
-edges = [np.sum(adjacency_matrix[i]) for i in range(board_size ** 2)]
-#print(f'Neighbors///edges: {edges}')
+edges = [np.sum(adjacency_matrix[i]) for i in range(adjacency_matrix.shape[0])]
+print(f'Neighbors///edges: {edges}')
+#visualize(adjacency_matrix)
+#visualize_hexagonal_grid(adjacency_matrix, board_size)
 
 #graphs training data
 print("Creating training data")
@@ -139,11 +212,12 @@ graphs_train.prepare_edge_configuration()
 
 # add edges between connected nodes
 for graph_id in range(X.shape[0]):
+    #assign symbol
     for k in range(board_size ** 2):
         sym = X[graph_id][k]
         graphs_train.add_graph_node_property(graph_id, k, sym)
     
-    # add edges from adjacency matrix - TODO: FIX - looping trough every, might be too expensive as we scale
+    #add edges between nodes where there is a connection
     for i in range(board_size ** 2):
         for j in range(board_size ** 2):
             if adjacency_matrix[i, j] == 1:
