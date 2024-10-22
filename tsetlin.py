@@ -152,10 +152,10 @@ def training():
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", default=100, type=int)
-    parser.add_argument("--number-of-clauses", default=50, type=int)
-    parser.add_argument("--T", default=400, type=int)
-    parser.add_argument("--s", default=1.0, type=float)
+    parser.add_argument("--epochs", default=200, type=int)
+    parser.add_argument("--number-of-clauses", default=250, type=int)
+    parser.add_argument("--T", default=450, type=int)
+    parser.add_argument("--s", default=1.2, type=float)
     #parser.add_argument("--number-of-state-bits", default=8, type=int)
     parser.add_argument("--depth", default=3, type=int)
     parser.add_argument("--hypervector-size", default=256, type=int)
@@ -174,10 +174,10 @@ def default_args(**kwargs):
 #load data
 args = default_args()
 
-board_size = 4
+board_size = 3
 
-X, X_test, y, y_test = dataloader('hex_game_results.csv')
-#X, X_test, y, y_test = dataloader('3x3_small.csv')
+#X, X_test, y, y_test = dataloader('hex_game_results.csv')
+X, X_test, y, y_test = dataloader('3x3_small.csv')
 
 #create adjacency matrix
 #adjacency_matrix = create_matrix(board_size)
@@ -187,7 +187,7 @@ print(adjacency_matrix)
 edges = [np.sum(adjacency_matrix[i]) for i in range(adjacency_matrix.shape[0])]
 print(f'Neighbors///edges: {edges}')
 #visualize(adjacency_matrix)
-visualize_hexagonal_grid(adjacency_matrix, board_size)
+#visualize_hexagonal_grid(adjacency_matrix, board_size)
 
 #graphs training data
 print("Creating training data")
@@ -212,11 +212,12 @@ graphs_train.prepare_edge_configuration()
 
 # add edges between connected nodes
 for graph_id in range(X.shape[0]):
+    #assign symbol
     for k in range(board_size ** 2):
         sym = X[graph_id][k]
         graphs_train.add_graph_node_property(graph_id, k, sym)
     
-
+    #add edges between nodes where there is a connection
     for i in range(board_size ** 2):
         for j in range(board_size ** 2):
             if adjacency_matrix[i, j] == 1:
