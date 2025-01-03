@@ -1,8 +1,30 @@
+// Copyright (c) 2024 Ole-Christoffer Granmo
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <string.h>
 
 #ifndef BOARD_DIM
-    #define BOARD_DIM 11
+    #define BOARD_DIM 13
 #endif
 
 int neighbors[] = {-(BOARD_DIM+2) + 1, -(BOARD_DIM+2), -1, 1, (BOARD_DIM+2), (BOARD_DIM+2) - 1};
@@ -14,6 +36,37 @@ struct hex_game {
 	int moves[BOARD_DIM*BOARD_DIM];
 	int connected[(BOARD_DIM+2)*(BOARD_DIM+2)*2];
 };
+
+void write_winner_to_csv(struct hex_game *hg, int winner) {
+    FILE *file;
+    char filename[50];
+    
+    time_t now = time(NULL);
+    strftime(filename, sizeof(filename), "13x13.csv", localtime(&now));
+    
+    file = fopen(filename, "a"); 
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < BOARD_DIM; ++i) {
+        for (int j = 0; j < BOARD_DIM; ++j) {
+            int pos = ((i + 1) * (BOARD_DIM + 2) + (j + 1)) * 2;
+            if (hg->board[pos] == 1) {
+                fputc('X', file);
+            } else if (hg->board[pos + 1] == 1) {
+                fputc('O', file);
+            } else {
+                fputc(' ', file);
+            }
+        }
+    }
+
+    fprintf(file, ",%d\n", winner);
+
+    fclose(file);
+}
 
 void hg_init(struct hex_game *hg)
 {
@@ -103,23 +156,23 @@ int hg_full_board(struct hex_game *hg)
 	return hg->number_of_open_positions == 0;
 }
 
-void hg_print(struct hex_game *hg, FILE *file)
+void hg_print(struct hex_game *hg)
 {
 	for (int i = 0; i < BOARD_DIM; ++i) {
 		for (int j = 0; j < i; j++) {
-			fprintf(file, " ");
+			printf(" ");
 		}
 
 		for (int j = 0; j < BOARD_DIM; ++j) {
 			if (hg->board[((i+1)*(BOARD_DIM+2) + j + 1)*2] == 1) {
-				fprintf(file, " X");
+				printf(" X");
 			} else if (hg->board[((i+1)*(BOARD_DIM+2) + j + 1)*2 + 1] == 1) {
-				fprintf(file, " O");
+				printf(" O");
 			} else {
-				fprintf(file, " .");
+				printf(" .");
 			}
 		}
-		fprintf(file, "\n");
+		printf("\n");
 	}
 }
 
@@ -129,15 +182,7 @@ int main() {
 	int winner = -1;
 	int count = 0;
 
-	// Open a single file for all game outputs
-	FILE *file = fopen("game_output.txt", "w");
-
-	if (!file) {
-		perror("Failed to open file");
-		return 1;
-	}
-
-	for (int game = 0; count < 5; ++game) {
+	for (int game = 0; count < 10000; ++game) {
 		hg_init(&hg);
 
 		int player = 0;
@@ -152,16 +197,11 @@ int main() {
 			player = 1 - player;
 		}
 
-		if (hg.number_of_open_positions >= 75) {
-			fprintf(file, "\nGame %d\n", game + 1);
-			fprintf(file, "Player %d wins!\n\n", winner);
-			hg_print(&hg, file);
-			count++;
+		if (hg.number_of_open_positions >=93) {
+			printf("\nPlayer %d wins!\n\n", winner);
+            hg_print(&hg);
+            write_winner_to_csv(&hg, winner);
+            count++;
 		}
 	}
-
-	// Close the file after all games are written
-	fclose(file);
-
-	return 0;
 }
